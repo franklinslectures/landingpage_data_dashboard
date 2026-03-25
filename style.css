@@ -1,74 +1,290 @@
+/* ================= ROOT ================= */
+
+:root{
+--bg:#0a0a0f;
+--card:#111116;
+--card2:#18181f;
+
+--border:#23232b;
+
+--text:#f1f5f9;
+--muted:#9ca3af;
+
+--accent:#e50914; 
+--accent2:#9333ea; 
+
+--glow:0 0 25px rgba(229,9,20,0.35);
+}
+
 body{
-font-family:Inter;
-background:#f5f7fa;
+font-family: Inter, -apple-system, sans-serif;
+background: radial-gradient(circle at top, #111, #050505 70%);
 margin:0;
-padding:20px;
+padding:24px;
+color:var(--text);
 }
 
-.center{
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-}
-
-.card{
-background:white;
-padding:30px;
-border-radius:12px;
-box-shadow:0 4px 20px rgba(0,0,0,0.05);
-text-align:center;
-}
+/* ================= HEADER ================= */
 
 .topbar{
 display:flex;
 justify-content:space-between;
-background:white;
-padding:18px;
-border-radius:14px;
-box-shadow:0 8px 30px rgba(0,0,0,0.05);
-margin-bottom:20px;
+align-items:center;
+padding:18px 22px;
+border-radius:18px;
+
+background: linear-gradient(145deg,#111116,#0d0d12);
+border:1px solid var(--border);
+
+box-shadow:
+0 10px 40px rgba(0,0,0,0.6),
+inset 0 1px 0 rgba(255,255,255,0.03);
+
+margin-bottom:22px;
 }
+
+.titleSection h1{
+margin:0;
+font-size:20px;
+font-weight:600;
+letter-spacing:-0.3px;
+}
+
+.subtitle{
+font-size:12px;
+color:var(--muted);
+}
+
+/* ================= BUTTONS ================= */
+
+button{
+border:none;
+padding:10px 16px;
+border-radius:12px;
+cursor:pointer;
+font-weight:500;
+font-size:13px;
+transition: all 0.2s ease;
+background:rgb(86, 0, 0);
+color:rgb(240, 7, 7);
+}
+
+/* PRIMARY */
+.primary{
+background: linear-gradient(135deg,#e50914,#b20710);
+color:rgb(255, 255, 255);
+
+box-shadow: var(--glow);
+}
+
+.primary:hover{
+transform: scale(1.03);
+}
+
+/* SECONDARY */
+button:not(.primary):not(.danger){
+background: var(--card2);
+color:var(--text);
+border:1px solid var(--border);
+}
+
+button:not(.primary):not(.danger):hover{
+background:#33336b;
+}
+
+/* ================= CONTROLS ================= */
 
 .controls{
-background:white;
-padding:15px;
-border-radius:14px;
-box-shadow:0 8px 30px rgba(0,0,0,0.05);
-margin-bottom:20px;
+display:flex;
+flex-wrap:wrap;
+gap:12px;
+padding:16px;
+border-radius:18px;
+
+background: linear-gradient(145deg,#111116,#0d0d12);
+border:1px solid var(--border);
+
+box-shadow:0 10px 40px rgba(0,0,0,0.6);
+margin-bottom:22px;
 }
 
-.dateHeader td{
-background:#eef2ff;
-font-weight:600;
-padding:12px;
-border-top:2px solid #6366f1;
+/* ================= CUSTOM DROPDOWNS ================= */
+
+select{
+appearance:none;
+-webkit-appearance:none;
+-moz-appearance:none;
+
+background: linear-gradient(145deg,#18181f,#121217);
+color:var(--text);
+
+padding:10px 36px 10px 12px;
+border-radius:10px;
+border:1px solid var(--border);
+
+font-size:13px;
+cursor:pointer;
+
+background-image:url("data:image/svg+xml;utf8,<svg fill='%23aaa' height='20' viewBox='0 0 20 20'><path d='M5 7l5 5 5-5z'/></svg>");
+background-repeat:no-repeat;
+background-position:right 10px center;
 }
+
+select:hover{
+border-color:#444;
+}
+
+/* ================= SEARCH ================= */
+
+.searchGroup{
+display:flex;
+align-items:center;
+border-radius:12px;
+overflow:hidden;
+
+background: linear-gradient(145deg,#18181f,#121217);
+border:1px solid var(--border);
+}
+
+.searchGroup select{
+border:none;
+background:transparent;
+}
+
+.searchGroup input{
+border:none;
+background:transparent;
+padding:10px;
+width:220px;
+color:var(--text);
+}
+
+select{
+background-color:#18181f;
+color:#f1f5f9;
+}
+
+select option{
+background:#18181f;
+color:#f1f5f9;
+}
+
+
+/* ================= TABLE ================= */
 
 table{
 width:100%;
-background:white;
+border-collapse:separate;
+border-spacing:0 5px; /* this creates gap between rows */
+}
+
+thead th{
+text-align:left;
+font-size:12px;
+font-weight:600;
+color:var(--muted);
+padding:10px 14px;
+}
+
+/* ROW BASE */
+tbody tr{
+background: linear-gradient(145deg,#17171d,#0e0e13);
+transition: all 0.2s ease;
+}
+
+/* APPLY RADIUS TO CELLS (THIS IS THE FIX) */
+tbody tr td:first-child{
+border-top-left-radius:14px;
+border-bottom-left-radius:14px;
+}
+
+tbody tr td:last-child{
+border-top-right-radius:14px;
+border-bottom-right-radius:14px;
+}
+
+/* CELL */
+td{
+padding:12px;
+}
+
+/* HOVER */
+tbody tr:hover{
+transform: translateY(-2px);
+box-shadow:
+0 10px 30px rgba(0,0,0,0.6),
+0 0 20px rgba(147,51,234,0.15);
+}
+/* ROW CARD STYLE */
+tbody tr{
+background: linear-gradient(145deg,#710112,#0e0e13);
+/* border:0.5px solid var(--border); */
 border-radius:14px;
-overflow:hidden;
-box-shadow:0 8px 30px rgba(0,0,0,0.05);
+
+transition: all 0.2s ease;
 }
 
-td,th{
-padding:14px;
-border-bottom:1px solid #f1f5f9;
+tbody tr:hover{
+transform: translateY(-2px);
+box-shadow:
+0 10px 30px rgba(0,0,0,0.6),
+0 0 20px rgba(147,51,234,0.15);
 }
 
-button{
-background:#6366f1;
-color:white;
-border:none;
-padding:10px 16px;
-border-radius:10px;
-cursor:pointer;
-}
-
-input,select{
+/* CELL */
+td{
 padding:10px;
-border-radius:10px;
-border:1px solid #e5e7eb;
+}
+
+/* DATE HEADER */
+.dateHeader td{
+font-size:13px;
+font-weight:600;
+color:#fc8286;
+padding:14px 6px;
+border-left:3px solid #5a0106;
+background:rgb(28, 1, 2);
+border-radius:8px;
+}
+
+/* ================= SOURCE TAG ================= */
+
+.source{
+display:inline-flex;
+align-items:center;
+
+max-width:140px;
+padding:6px 10px;
+border-radius:4px;
+
+font-size:12px;
+font-weight:300;
+
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+
+background: linear-gradient(135deg,#38026a,#d6020d);
+color:rgb(36, 1, 1);
+}
+
+/* ================= PAGINATION ================= */
+
+.pagination{
+margin-top:20px;
+display:flex;
+justify-content:center;
+align-items:center;
+gap:12px;
+}
+
+/* ================= GLOW ================= */
+
+.glow{
+animation: glow 0.2s infinite alternate;
+}
+
+@keyframes glow{
+from{ box-shadow:0 0 10px rgb(252, 252, 245);}
+to{ box-shadow:0 0 25px rgb(242, 13, 1);}
 }

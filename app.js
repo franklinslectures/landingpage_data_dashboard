@@ -1,104 +1,194 @@
 document.addEventListener("DOMContentLoaded", async ()=>{
 
-const db=window.db;
-let page=1;
-const perPage=10;
-let filtered=[];
+const db = window.db;
+
+let pages = [];
+let currentPage = 0;
+let lastTimestamp = null;
+let hasMore = true;
+
+const perPage = 10;
 
 // restore session
-let saved=JSON.parse(localStorage.getItem("sb"));
+let saved = JSON.parse(localStorage.getItem("sb"));
 if(!saved){
 window.location.href="index.html";
 return;
 }
 await db.auth.setSession(saved);
 
+
+
 // logout
-logoutBtn.onclick=async()=>{
+logoutBtn.onclick = async ()=>{
 localStorage.removeItem("sb");
 await db.auth.signOut();
 window.location.href="index.html";
-}
+};
 
-// show custom picker
-dateFilter.onchange=()=>{
-if(dateFilter.value==="custom"){
-fromDate.style.display="inline";
-toDate.style.display="inline";
-}else{
-fromDate.style.display="none";
-toDate.style.display="none";
-}
-}
+// glow trigger
+[searchInput, searchField, fromDate, toDate].forEach(el=>{
+el.oninput = ()=> applyFilter.classList.add("glow");
+});
 
-// IST RANGE
-function ISTDayRange(date){
+dateFilter.onchange = ()=>{
+fromDate.hidden = toDate.hidden = dateFilter.value !== "custom";
+applyFilter.classList.add("glow");
+};
 
-let start=new Date(date);
+// IST helpers
+function getISTRange(type){
+
+let now = new Date(); // already IST
+
+let start, end;
+
+if(type==="today"){
+start = new Date();
 start.setHours(0,0,0,0);
 
-let end=new Date(date);
+end = new Date();
 end.setHours(23,59,59,999);
+}
 
-let startUTC=new Date(start.getTime()-330*60000);
-let endUTC=new Date(end.getTime()-330*60000);
+if(type==="yesterday"){
+let y = new Date();
+y.setDate(y.getDate()-1);
 
-return{
-start:startUTC.toISOString(),
-end:endUTC.toISOString()
+start = new Date(y);
+start.setHours(0,0,0,0);
+
+end = new Date(y);
+end.setHours(23,59,59,999);
+}
+
+if(type==="last7"){
+let s = new Date();
+s.setDate(s.getDate()-6);
+s.setHours(0,0,0,0);
+
+let e = new Date();
+e.setHours(23,59,59,999);
+
+start = s;
+end = e;
+}
+
+if(type==="custom"){
+if(!fromDate.value || !toDate.value) return null;
+
+let s = new Date(fromDate.value);
+let e = new Date(toDate.value);
+
+s.setHours(0,0,0,0);
+e.setHours(23,59,59,999);
+
+start = s;
+end = e;
+}
+
+if(start && end){
+return {
+start: start.toISOString(),  // convert to UTC here
+end: end.toISOString()
 };
 }
 
-// GROUP
+return null;
+}
+
+function toIST(date){
+return new Date(date);
+}
+
+// GROUP FIX
 function groupByDate(data){
-
 let groups={};
-
 data.forEach(l=>{
-
-let ist=new Date(
-new Date(l.created_at)
-.getTime()+330*60000
-);
-
-let key=ist.toDateString();
-
-if(!groups[key])groups[key]=[];
+let ist=toIST(l.created_at);
+let key=`${ist.getFullYear()}-${ist.getMonth()}-${ist.getDate()}`;
+if(!groups[key]) groups[key]=[];
 groups[key].push(l);
-
 });
-
 return groups;
 }
 
-// RENDER
-function render(groups){
+// SOURCE COLOR (AUTO)
+function getSourceColor(str){
 
+let hash = 0;
+
+for(let i = 0; i < str.length; i++){
+hash = str.charCodeAt(i) + ((hash << 5) - hash);
+}
+
+// generate HSL color
+let hue = Math.abs(hash) % 320;
+
+return `hsl(${hue}, 100%, 45%)`;
+
+}
+
+// FORMAT SOURCE
+function formatSource(url){
+if(!url) return "-";
+try{
+let u=new URL(url);
+return u.pathname.replace(/\//g,'') || u.hostname;
+}catch{
+return url.slice(0,20);
+}
+}
+
+// RENDER
+function render(data){
+
+let groups=groupByDate(data);
 tableBody.innerHTML="";
 
-Object.keys(groups).forEach(date=>{
+Object.keys(groups).forEach(key=>{
+
+let date=new Date(key);
 
 let header=document.createElement("tr");
 header.className="dateHeader";
-header.innerHTML=`<td colspan="6">${date}</td>`;
+header.innerHTML=`<td colspan="7">${date.toDateString()}</td>`;
 tableBody.appendChild(header);
 
-groups[date].forEach(r=>{
+groups[key].forEach(r=>{
 
-let ist=new Date(
-new Date(r.created_at)
-.getTime()+330*60000
-);
+let ist = toIST(r.created_at);
 
-let row=document.createElement("tr");
+// FULL URL (for color)
+let fullSource = r.source || "";
 
-row.innerHTML=`
+// DISPLAY TEXT (short)
+let displaySource = formatSource(fullSource);
+
+// 🔥 USE FULL URL FOR COLOR
+let color = getSourceColor(fullSource);
+
+let row = document.createElement("tr");
+
+row.innerHTML = `
 <td>${r.fullname}</td>
 <td>${r.mobile}</td>
+<td>${r.college}</td>
 <td>${r.semester}</td>
 <td>${r.department}</td>
-<td>${r.college}</td>
-<td>${ist.toLocaleTimeString()}</td>
+<td>
+<span class="source" 
+style="background:${color}" 
+title="${fullSource}">
+${displaySource}
+</span>
+</td>
+<td>${ist.toLocaleString('en-IN', {
+hour: '2-digit',
+minute: '2-digit',
+second: '2-digit',
+hour12: true
+})}</td>
 `;
 
 tableBody.appendChild(row);
@@ -107,127 +197,93 @@ tableBody.appendChild(row);
 
 });
 
+updateButtons();
+pageInfo.innerText=`Page ${currentPage+1}`;
 }
 
-// FILTER
-async function apply(){
+// BUTTON STATE
+function updateButtons(){
+prevBtn.disabled=currentPage===0;
+if(currentPage<pages.length-1){
+nextBtn.disabled=false;
+}else{
+nextBtn.disabled=!hasMore;
+}
+}
 
-let query=db
-.from("leads")
+// FETCH
+async function fetchNext(){
+
+let query=db.from("leads")
 .select("*")
-.order("created_at",{ascending:false});
+.order("created_at",{ascending:false})
+.limit(perPage);
+
+if(lastTimestamp){
+query=query.lt("created_at",lastTimestamp);
+}
+
+let range=getISTRange(dateFilter.value);
+
+if(range){
+query=query.gte("created_at",range.start)
+.lte("created_at",range.end);
+}
 
 if(searchInput.value){
-query=query.ilike("fullname",
-`%${searchInput.value}%`);
-}
-
-// TODAY AUTO
-if(dateFilter.value==="today"){
-let r=ISTDayRange(new Date());
-query=query.gte("created_at",r.start)
-.lte("created_at",r.end);
-}
-
-// YESTERDAY
-if(dateFilter.value==="yesterday"){
-let y=new Date();
-y.setDate(y.getDate()-1);
-let r=ISTDayRange(y);
-query=query.gte("created_at",r.start)
-.lte("created_at",r.end);
-}
-
-// LAST 7
-if(dateFilter.value==="last7"){
-let t=new Date();
-let l7=new Date();
-l7.setDate(t.getDate()-6);
-let s=ISTDayRange(l7).start;
-let e=ISTDayRange(t).end;
-query=query.gte("created_at",s)
-.lte("created_at",e);
-}
-
-// CUSTOM
-if(dateFilter.value==="custom" &&
-fromDate.value && toDate.value){
-
-let s=ISTDayRange(fromDate.value).start;
-let e=ISTDayRange(toDate.value).end;
-query=query.gte("created_at",s)
-.lte("created_at",e);
-}
-
-// DEPT
-if(deptFilter.value){
-query=query.eq("department",
-deptFilter.value);
+query=query.ilike(searchField.value,`%${searchInput.value}%`);
 }
 
 const {data}=await query;
 
-filtered=data;
-render(groupByDate(filtered));
-
+if(data.length>0){
+lastTimestamp=data[data.length-1].created_at;
 }
 
-// AUTO LOAD TODAY
-apply();
+pages.push(data);
+currentPage=pages.length-1;
+hasMore=data.length===perPage;
 
-// MANUAL
-applyFilter.onclick=apply;
+render(data);
+}
+
+// NAV
+nextBtn.onclick=()=>{
+if(currentPage<pages.length-1){
+currentPage++;
+render(pages[currentPage]);
+return;
+}
+if(hasMore) fetchNext();
+};
+
+prevBtn.onclick=()=>{
+if(currentPage>0){
+currentPage--;
+render(pages[currentPage]);
+}
+};
+
+// APPLY
+applyFilter.onclick=async ()=>{
+applyFilter.classList.remove("glow");
+pages=[];
+currentPage=0;
+lastTimestamp=null;
+hasMore=true;
+await fetchNext();
+};
+
+// INIT
+fetchNext();
 
 // EXPORT
 exportBtn.onclick=()=>{
-
-let ws=XLSX.utils.json_to_sheet(filtered);
+let all=pages.flat();
+let ws=XLSX.utils.json_to_sheet(all);
 let wb=XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb,ws,"Leads");
-
-let fileName=getExportFileName();
-
-XLSX.writeFile(wb,fileName);
-
-}
-
+XLSX.writeFile(wb,"leads.xlsx");
+};
 
 });
-
-function getExportFileName(){
-
-let today=new Date().toISOString().split("T")[0];
-
-if(dateFilter.value==="today")
-return `leads_today_${today}.xlsx`;
-
-if(dateFilter.value==="yesterday"){
-
-let y=new Date();
-y.setDate(y.getDate()-1);
-let d=y.toISOString().split("T")[0];
-
-return `leads_yesterday_${d}.xlsx`;
-}
-
-if(dateFilter.value==="last7"){
-
-let t=new Date();
-let l7=new Date();
-l7.setDate(t.getDate()-6);
-
-let from=l7.toISOString().split("T")[0];
-let to=t.toISOString().split("T")[0];
-
-return `leads_last7_${from}_to_${to}.xlsx`;
-}
-
-if(dateFilter.value==="custom" &&
-fromDate.value && toDate.value){
-
-return `leads_${fromDate.value}_to_${toDate.value}.xlsx`;
-}
-
-return `leads_all_${today}.xlsx`;
-
-}

@@ -9,14 +9,24 @@
 <script src="supabase.js"></script>
 
 <link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
 
 </head>
 
 <body>
 
 <div class="topbar">
-<h2>Leads Dashboard</h2>
-<button id="logoutBtn">Logout</button>
+
+<div class="titleSection">
+<h1>Leads Dashboard</h1>
+<span class="subtitle">Franklin's Lectures</span>
+</div>
+
+<div class="topActions">
+<!-- <button id="themeToggle">🌙</button> -->
+<button id="logoutBtn" class="danger">Logout</button>
+</div>
+
 </div>
 
 <div class="controls">
@@ -29,22 +39,23 @@
 <option value="all">All</option>
 </select>
 
-<input type="date" id="fromDate" style="display:none">
-<input type="date" id="toDate" style="display:none">
+<input type="date" id="fromDate" hidden>
+<input type="date" id="toDate" hidden>
 
-<select id="deptFilter">
-<option value="">Department</option>
-<option value="CSE">CSE</option>
-<option value="ECE">ECE</option>
-<option value="EEE">EEE</option>
-<option value="CE">CE</option>
-<option value="ME">ME</option>
+<div class="searchGroup">
+<select id="searchField">
+<option value="fullname">Name</option>
+<option value="mobile">Mobile</option>
+<option value="college">College</option>
+<option value="department">Department</option>
+<option value="source">Source</option>
 </select>
 
 <input type="text" id="searchInput" placeholder="Search">
+</div>
 
-<button id="applyFilter">Filter</button>
-<button id="exportBtn">Export Excel</button>
+<button id="applyFilter" class="primary">Apply</button>
+<button id="exportBtn">Export</button>
 
 </div>
 
@@ -53,9 +64,10 @@
 <tr>
 <th>Name</th>
 <th>Mobile</th>
-<th>Semester</th>
-<th>Department</th>
 <th>College</th>
+<th>Sem</th>
+<th>Dept</th>
+<th>Source</th>
 <th>Time</th>
 </tr>
 </thead>
